@@ -6,8 +6,6 @@ use App\Models\Planning;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
-use Google\Client;
-use Google\Service\Drive;
 
 class PlanningController extends Controller
 {
@@ -24,99 +22,55 @@ class PlanningController extends Controller
         }
 
         $plannings = $query->latest()->paginate(10);
-        $googleDriveConnected = !empty(env('GOOGLE_REFRESH_TOKEN'));
 
-        return view('plannings.index', compact('plannings', 'googleDriveConnected'));
+        return view('plannings.index', compact('plannings'));
     }
 
-    public function adminIndex(Request $request)
+    public function review(Request $request)
     {
-        $query = Planning::with('user');
+        $plannings = Planning::with('user')
+            ->where('status', 'revisión')
+            ->latest()
+            ->paginate(15);
 
-        if ($request->has('search') && $request->input('search') != '') {
-            $searchTerm = '%' . $request->input('search') . '%';
-            $query->where(function($q) use ($searchTerm) {
-                $q->where('title', 'like', $searchTerm)
-                  ->orWhereHas('user', function($userQuery) use ($searchTerm) {
-                      $userQuery->where('name', 'like', $searchTerm);
-                  });
-            });
-        }
-
-        if ($request->has('status') && $request->input('status') != '') {
-            $query->where('status', $request->input('status'));
-        }
-
-        $plannings = $query->latest()->paginate(10);
-
-        return view('plannings.admin-index', compact('plannings'));
+        return view('plannings.review', compact('plannings'));
     }
 
     public function store(Request $request)
     {
         $request->validate([
             'title' => 'required|string|max:255',
-            'file' => [
-                'required_without:google_drive_file_id',
-                'file',
-                'max:2048', // 2MB Max
-                'mimetypes:application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-            ],
-            'google_drive_file_id' => 'required_without:file|string',
+            'file' => 'required|file|max:10240|mimetypes:application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document',
         ]);
 
-        $path = null;
+        $path = $request->file('file')->store('plannings', 'public');
 
-        if ($request->hasFile('file')) {
-            $path = $request->file('file')->store('plannings', 'public');
-        } elseif ($request->has('google_drive_file_id')) {
-            $fileId = $request->input('google_drive_file_id');
+        Planning::create([
+            'user_id' => Auth::id(),
+            'title' => $request->title,
+            'file_path' => $path,
+        ]);
 
-            $client = new Client();
-            $client->setClientId(config('google.client_id'));
-            $client->setClientSecret(config('google.client_secret'));
-            $client->setRefreshToken(env('GOOGLE_REFRESH_TOKEN'));
-            $client->fetchAccessTokenWithRefreshToken();
-
-            $service = new Drive($client);
-            $file = $service->files->get($fileId, ['alt' => 'media']);
-
-            $fileName = $request->input('title');
-            // Sanitize filename
-            $safeFileName = preg_replace('/[^A-Za-z0-9\._-]/', '', $fileName);
-            $path = 'plannings/' . time() . '_' . $safeFileName;
-
-            Storage::disk('public')->put($path, $file->getBody()->getContents());
-        }
-
-        if ($path) {
-            Planning::create([
-                'user_id' => Auth::id(),
-                'title' => $request->title,
-                'file_path' => $path,
-            ]);
-
-            return redirect()->route('plannings.index')->with('success', 'Planificación subida exitosamente.');
-        }
-
-        return redirect()->back()->with('error', 'No se pudo subir la planificación.');
+        return redirect()->route('plannings.index')->with('success', 'Planificación subida exitosamente.');
     }
 
     public function download(Planning $planning)
     {
-        if (Auth::user()->hasRole('secretaria') || $planning->user_id === Auth::id()) {
+        $user = Auth::user();
+        if ($user->hasRole('secretaria') || $user->hasRole('vicerrector') || $planning->user_id === $user->id) {
             return Storage::disk('public')->download($planning->file_path);
         }
-        abort(403);
+        abort(403, 'Acción no autorizada.');
     }
 
     public function view(Planning $planning)
     {
-        if (Auth::user()->hasRole('secretaria') || $planning->user_id === Auth::id()) {
+        $user = Auth::user();
+        if ($user->hasRole('secretaria') || $user->hasRole('vicerrector') || $planning->user_id === $user->id) {
             $planning->load('comments.user');
             return view('plannings.view', compact('planning'));
         }
-        abort(403);
+        abort(403, 'Página no encontrada o sin permisos de acceso.');
     }
 
     public function updateStatus(Request $request, Planning $planning)
@@ -125,26 +79,27 @@ class PlanningController extends Controller
             'status' => 'required|in:borrador,revisión,aprobado,rechazado',
         ]);
 
-        // Lógica de permisos
         $user = Auth::user();
         $currentStatus = $planning->status;
         $newStatus = $request->status;
 
         if ($user->hasRole('docente')) {
-            // El docente solo puede enviar a revisión o volver a borrador
             if (!(($currentStatus === 'borrador' && $newStatus === 'revisión') || 
                   ($currentStatus === 'rechazado' && $newStatus === 'revisión'))) {
-                abort(403, 'Acción no permitida.');
+                abort(403, 'Como docente, solo puedes enviar a revisión un borrador o un documento rechazado.');
             }
-        } elseif ($user->hasRole('secretaria')) {
-            // La secretaría solo puede aprobar o rechazar
+        } elseif ($user->hasRole('secretaria') || $user->hasRole('vicerrector')) {
             if ($currentStatus !== 'revisión') {
-                abort(403, 'Solo se pueden gestionar planificaciones en revisión.');
+                abort(403, 'Solo puedes aprobar o rechazar planificaciones que estén en estado de revisión.');
             }
+        } else {
+            abort(403, 'No tienes permisos para cambiar el estado de esta planificación.');
         }
 
         $planning->update(['status' => $newStatus]);
 
-        return back()->with('success', 'El estado de la planificación ha sido actualizado.');
+        // Aquí puedes agregar la lógica de notificación que necesites
+
+        return redirect()->route('plannings.review')->with('success', 'El estado de la planificación ha sido actualizado correctamente.');
     }
 }

@@ -1,163 +1,207 @@
 <x-app-layout>
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('Planificaciones') }}
+            {{ __('Panel de Planificaciones') }}
         </h2>
     </x-slot>
 
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <div class="mb-4 p-4 bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                @if ($googleDriveConnected)
-                    <h3 class="font-semibold text-lg text-gray-800 leading-tight mb-2">Google Drive Conectado</h3>
-                    <p class="text-sm text-gray-600 mb-4">Tu cuenta de Google Drive está conectada. Ahora puedes subir planificaciones directamente desde la nube.</p>
-                    <a href="{{ route('google.picker') }}" class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-500 active:bg-blue-700 focus:outline-none focus:border-blue-700 focus:ring ring-blue-300 disabled:opacity-25 transition ease-in-out duration-150">
-                        <svg class="w-5 h-5 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48px" height="48px"><path fill="#fff" d="M31,36l6-24h-6z"/><path fill="#fff" d="M17,36l-6-24h6z"/></svg>
-                        Subir desde Google Drive
-                    </a>
-                @else
-                    <h3 class="font-semibold text-lg text-gray-800 leading-tight mb-2">Conectar con Google Drive</h3>
-                    <p class="text-sm text-gray-600 mb-4">Conecta tu cuenta de Google Drive para subir planificaciones directamente desde la nube.</p>
-                    <a href="{{ route('google.connect') }}" class="inline-flex items-center px-4 py-2 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700 active:bg-gray-900 focus:outline-none focus:border-gray-900 focus:ring ring-gray-300 disabled:opacity-25 transition ease-in-out duration-150">
-                        <svg class="w-5 h-5 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48px" height="48px"><path fill="#4285F4" d="M37,12H11l-6,24h38L37,12z"/><path fill="#3F51B5" d="M37,12l-6,24h6l6-24H37z"/><path fill="#4CAF50" d="M11,12l6,24h-6l-6-24H11z"/><path fill="#1E88E5" d="M31,36l6-24h-6z"/><path fill="#2196F3" d="M17,36l-6-24h6z"/></svg>
-                        Conectar con Google Drive
-                    </a>
-                @endif
-            </div>
 
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-6 text-gray-900">
-                    <h3 class="font-semibold text-lg text-gray-800 leading-tight mb-4">Subir Nueva Planificación (desde el ordenador)</h3>
-                    @if(session('success'))
-                        <div class="mb-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative" role="alert">
-                            <span class="block sm:inline">{{ session('success') }}</span>
-                        </div>
-                    @endif
-                    @if(session('error'))
-                        <div class="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
-                            <span class="block sm:inline">{{ session('error') }}</span>
-                        </div>
-                    @endif
-
-                    <form action="{{ route('plannings.store') }}" method="POST" enctype="multipart/form-data">
-                        @csrf
-                        <div>
-                            <x-input-label for="title" :value="__('Título')" />
-                            <x-text-input id="title" class="block mt-1 w-full" type="text" name="title" :value="old('title')" required autofocus />
-                            <x-input-error :messages="$errors->get('title')" class="mt-2" />
-                        </div>
-
-                        <div class="mt-4">
-                            <x-input-label for="file" :value="__('Archivo (PDF, DOC, DOCX)')" />
-                            <input id="file" class="block mt-1 w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm" type="file" name="file" required />
-                            <x-input-error :messages="$errors->get('file')" class="mt-2" />
-                        </div>
-
-                        <div class="flex items-center justify-end mt-4">
-                            <x-primary-button class="ms-3">
-                                {{ __('Subir Planificación') }}
-                            </x-primary-button>
-                        </div>
-                    </form>
+            <!-- Tarjeta de Bienvenida Principal -->
+            <div class="bg-white overflow-hidden shadow-xl sm:rounded-2xl mb-8 border-l-4 border-red-600">
+                <div class="p-8 flex items-center">
+                    <div class="flex-shrink-0">
+                        <svg class="h-12 w-12 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" /></svg>
+                    </div>
+                    <div class="ml-6">
+                        <h3 class="text-2xl font-bold text-gray-900">¡Bienvenido, {{ Auth::user()->name }}!</h3>
+                        <p class="mt-1 text-gray-600">Este es el centro de control para la gestión de planificaciones académicas.</p>
+                    </div>
                 </div>
             </div>
 
-            <div class="mt-8">
+            <!-- Tarjetas de Acceso Rápido (Dinámicas por Rol) -->
+            @auth
+                @php
+                    // Correct way to check for multiple roles
+                    $isAdmin = Auth::user()->hasRole('secretaria') || Auth::user()->hasRole('vicerrector');
+                @endphp
+
+                <div class="grid grid-cols-1 {{ $isAdmin ? 'md:grid-cols-3' : 'md:grid-cols-2' }} gap-8 mb-8">
+                    
+                    <!-- Card para Subir Planificación -->
+                    <a href="#upload-section" class="block transform hover:scale-105 transition-transform duration-300">
+                        <div class="bg-white overflow-hidden shadow-lg sm:rounded-2xl h-full flex flex-col justify-between">
+                            <div class="p-6">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0 bg-red-100 p-3 rounded-full">
+                                        <svg class="h-8 w-8 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
+                                    </div>
+                                    <div class="ml-5">
+                                        <h4 class="text-xl font-semibold text-gray-800">Subir Planificación</h4>
+                                        <p class="mt-1 text-gray-500">Añade un nuevo documento para su revisión.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+
+                    <!-- Card para Ver Mis Planificaciones -->
+                    <a href="#plannings-list" class="block transform hover:scale-105 transition-transform duration-300">
+                        <div class="bg-white overflow-hidden shadow-lg sm:rounded-2xl h-full flex flex-col justify-between">
+                            <div class="p-6">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0 bg-red-100 p-3 rounded-full">
+                                        <svg class="h-8 w-8 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11h10M7 15h5" /></svg>
+                                    </div>
+                                    <div class="ml-5">
+                                        <h4 class="text-xl font-semibold text-gray-800">Gestionar Mis Documentos</h4>
+                                        <p class="mt-1 text-gray-500">Revisa, filtra y gestiona tus planificaciones.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+
+                    @if($isAdmin)
+                        <!-- Card para Revisar Planificaciones (Solo Admins) -->
+                        <a href="{{ route('plannings.review') }}" class="block transform hover:scale-105 transition-transform duration-300">
+                            <div class="bg-white overflow-hidden shadow-lg sm:rounded-2xl h-full flex flex-col justify-between border-2 border-blue-500">
+                                <div class="p-6">
+                                    <div class="flex items-center">
+                                        <div class="flex-shrink-0 bg-blue-100 p-3 rounded-full">
+                                            <svg class="h-8 w-8 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg>
+                                        </div>
+                                        <div class="ml-5">
+                                            <h4 class="text-xl font-semibold text-gray-800">Revisar Planificaciones de Docentes</h4>
+                                            <p class="mt-1 text-gray-500">Accede para aprobar o rechazar documentos.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </a>
+                    @endif
+                </div>
+            @endauth
+
+            <!-- Sección para Subir Nueva Planificación -->
+            <div id="upload-section" class="pt-8">
+                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                    <div class="p-6 text-gray-900">
+                        <h3 class="text-2xl font-bold text-gray-800 mb-4">Subir Nueva Planificación</h3>
+                        @if(session('success'))
+                            <div class="mb-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative" role="alert">
+                                <span class="block sm:inline">{{ session('success') }}</span>
+                            </div>
+                        @endif
+                        @if(session('error'))
+                            <div class="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+                                <span class="block sm:inline">{{ session('error') }}</span>
+                            </div>
+                        @endif
+
+                        <form action="{{ route('plannings.store') }}" method="POST" enctype="multipart/form-data" class="space-y-6">
+                            <div>
+                                <x-input-label for="title" :value="__('Título de la Planificación')" class="text-base"/>
+                                <x-text-input id="title" class="block mt-2 w-full" type="text" name="title" :value="old('title')" required autofocus />
+                                <x-input-error :messages="$errors->get('title')" class="mt-2" />
+                            </div>
+
+                            <div>
+                                <x-input-label for="file" :value="__('Archivo (PDF, DOC, DOCX)')" class="text-base"/>
+                                <input id="file" class="block mt-2 w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 focus:outline-none" type="file" name="file" required />
+                                <p class="mt-1 text-sm text-gray-500">Tamaño máximo: 10MB.</p>
+                                <x-input-error :messages="$errors->get('file')" class="mt-2" />
+                            </div>
+
+                            <div class="flex items-center justify-end pt-4">
+                                <x-primary-button>
+                                    {{ __('Subir Planificación') }}
+                                </x-primary-button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sección de Mis Planificaciones -->
+            <div id="plannings-list" class="mt-12 pt-8">
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6 text-gray-900">
-                        <h3 class="font-semibold text-lg text-gray-800 leading-tight mb-4">Mis Planificaciones</h3>
+                        <h3 class="text-2xl font-bold text-gray-800 mb-6">Mis Planificaciones</h3>
 
-                        <form action="{{ route('plannings.index') }}" method="GET" class="mb-4">
-                            <div class="flex space-x-4">
-                                <div class="flex-1">
+                        <form action="{{ route('plannings.index') }}" method="GET" class="mb-6">
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                                <div class="md:col-span-1">
                                     <x-input-label for="search" :value="__('Buscar por Título')" />
-                                    <x-text-input id="search" class="block mt-1 w-full" type="text" name="search" :value="request('search')" />
+                                    <x-text-input id="search" class="block mt-1 w-full" type="text" name="search" :value="request('search')" placeholder="Escribe un título..."/>
                                 </div>
                                 <div>
                                     <x-input-label for="status" :value="__('Filtrar por Estado')" />
-                                    <select id="status" name="status" class="block mt-1 w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">
-                                        <option value="">Todos</option>
-                                        <option value="borrador" {{ request('status') == 'borrador' ? 'selected' : '' }}>Borrador</option>
-                                        <option value="revisión" {{ request('status') == 'revisión' ? 'selected' : '' }}>Revisión</option>
-                                        <option value="aprobado" {{ request('status') == 'aprobado' ? 'selected' : '' }}>Aprobado</option>
-                                        <option value="rechazado" {{ request('status') == 'rechazado' ? 'selected' : '' }}>Rechazado</option>
+                                    <select id="status" name="status" class="block mt-1 w-full border-gray-300 focus:border-red-500 focus:ring-red-500 rounded-md shadow-sm">
+                                        <option value="">Todos los Estados</option>
+                                        <option value="borrador" @if(request('status') == 'borrador') selected @endif>Borrador</option>
+                                        <option value="revisión" @if(request('status') == 'revisión') selected @endif>En Revisión</option>
+                                        <option value="aprobado" @if(request('status') == 'aprobado') selected @endif>Aprobado</option>
+                                        <option value="rechazado" @if(request('status') == 'rechazado') selected @endif>Rechazado</option>
                                     </select>
                                 </div>
-                                <div class="flex items-end">
-                                    <x-primary-button>
-                                        {{ __('Buscar') }}
+                                <div class="flex items-center">
+                                    <x-primary-button class="w-full md:w-auto justify-center">
+                                        {{ __('Filtrar') }}
                                     </x-primary-button>
                                 </div>
                             </div>
                         </form>
 
-                        <div class="overflow-x-auto">
+                        <div class="overflow-x-auto border-t">
                             <table class="min-w-full divide-y divide-gray-200">
                                 <thead class="bg-gray-50">
                                     <tr>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Título
-                                        </th>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Estado
-                                        </th>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Fecha de Subida
-                                        </th>
-                                        <th scope="col" class="relative px-6 py-3">
-                                            <span class="sr-only">Acciones</span>
-                                        </th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Título</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha de Subida</th>
+                                        <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
                                     </tr>
                                 </thead>
                                 <tbody class="bg-white divide-y divide-gray-200">
                                     @forelse ($plannings as $planning)
-                                        <tr>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                                {{ $planning->title }}
-                                            </td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                        <tr class="hover:bg-gray-50">
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-800">{{ $planning->title }}</td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                                <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full 
                                                     @switch($planning->status)
                                                         @case('borrador') bg-yellow-100 text-yellow-800 @break
                                                         @case('revisión') bg-blue-100 text-blue-800 @break
                                                         @case('aprobado') bg-green-100 text-green-800 @break
                                                         @case('rechazado') bg-red-100 text-red-800 @break
                                                     @endswitch">
-                                                    {{ ucfirst($planning->status) }}
+                                                    {{ ucfirst(str_replace('_', ' ', $planning->status)) }}
                                                 </span>
                                             </td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                {{ $planning->created_at->format('d/m/Y H:i') }}
-                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{{ $planning->created_at->format('d/m/Y H:i') }}</td>
                                             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                                <a href="{{ route('plannings.download', $planning) }}" class="text-indigo-600 hover:text-indigo-900">Descargar</a>
-                                                <a href="{{ route('plannings.view', $planning) }}" class="text-indigo-600 hover:text-indigo-900 ml-4">Ver</a>
-                                                @if ($planning->status === 'borrador' || $planning->status === 'rechazado')
-                                                    <form action="{{ route('plannings.updateStatus', $planning) }}" method="POST" class="inline-block">
-                                                        @csrf
-                                                        @method('PATCH')
-                                                        <input type="hidden" name="status" value="revisión">
-                                                        <button type="submit" class="text-blue-600 hover:text-blue-900 ml-4">Enviar a revisión</button>
-                                                    </form>
-                                                @endif
+                                                <a href="{{ route('plannings.view', $planning) }}" class="text-red-600 hover:text-red-800 font-semibold">Ver Detalles</a>
                                             </td>
                                         </tr>
                                     @empty
                                         <tr>
-                                            <td colspan="4" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
-                                                No se encontraron planificaciones con los criterios de búsqueda.
+                                            <td colspan="4" class="px-6 py-12 whitespace-nowrap text-sm text-gray-500 text-center">
+                                                <p>No se encontraron planificaciones con los criterios de búsqueda.</p>
                                             </td>
                                         </tr>
                                     @endforelse
                                 </tbody>
                             </table>
                         </div>
-                        <div class="mt-4">
+                        <div class="mt-6">
                             {{ $plannings->appends(request()->query())->links() }}
                         </div>
                     </div>
                 </div>
             </div>
+
         </div>
     </div>
 </x-app-layout>

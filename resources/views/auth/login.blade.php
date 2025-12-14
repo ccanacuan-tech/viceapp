@@ -70,7 +70,7 @@
     <div class="login-container">
         <div class="login-card">
             <div class="login-header">
-                <img src="{{ asset('logo.png') }}" alt="Logo del Colegio" class="login-logo">
+                <img src="{{ asset('images/logo10.png') }}" alt="Logo del Colegio" class="login-logo">
                 <h1 class="login-title">Sistema de Gestión de Planificación</h1>
                 <p class="login-subtitle">U.E. Fiscomisional 10 de Agosto</p>
             </div>
