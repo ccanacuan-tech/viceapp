@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Planning;
+use App\Models\Subject;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -22,8 +23,9 @@ class PlanningController extends Controller
         }
 
         $plannings = $query->latest()->paginate(10);
+        $subjects = Subject::all();
 
-        return view('plannings.index', compact('plannings'));
+        return view('plannings.index', compact('plannings', 'subjects'));
     }
 
     public function review(Request $request)
@@ -41,6 +43,7 @@ class PlanningController extends Controller
         $request->validate([
             'title' => 'required|string|max:255',
             'file' => 'required|file|max:10240|mimetypes:application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'subject_id' => 'required|exists:subjects,id',
         ]);
 
         $path = $request->file('file')->store('plannings', 'public');
@@ -49,6 +52,7 @@ class PlanningController extends Controller
             'user_id' => Auth::id(),
             'title' => $request->title,
             'file_path' => $path,
+            'subject_id' => $request->subject_id,
         ]);
 
         return redirect()->route('plannings.index')->with('success', 'Planificación subida exitosamente.');
@@ -82,12 +86,14 @@ class PlanningController extends Controller
         $user = Auth::user();
         $currentStatus = $planning->status;
         $newStatus = $request->status;
+        $redirectRoute = 'plannings.review'; // Default redirect for admins
 
         if ($user->hasRole('docente')) {
             if (!(($currentStatus === 'borrador' && $newStatus === 'revisión') || 
                   ($currentStatus === 'rechazado' && $newStatus === 'revisión'))) {
                 abort(403, 'Como docente, solo puedes enviar a revisión un borrador o un documento rechazado.');
             }
+            $redirectRoute = 'plannings.index'; // Docentes redirect to their index
         } elseif ($user->hasRole('secretaria') || $user->hasRole('vicerrector')) {
             if ($currentStatus !== 'revisión') {
                 abort(403, 'Solo puedes aprobar o rechazar planificaciones que estén en estado de revisión.');
@@ -98,8 +104,22 @@ class PlanningController extends Controller
 
         $planning->update(['status' => $newStatus]);
 
-        // Aquí puedes agregar la lógica de notificación que necesites
+        return redirect()->route($redirectRoute)->with('success', 'El estado de la planificación ha sido actualizado correctamente.');
+    }
 
-        return redirect()->route('plannings.review')->with('success', 'El estado de la planificación ha sido actualizado correctamente.');
+    public function destroy(Planning $planning)
+    {
+        // Ensure the user is authorized to delete the planning
+        if (Auth::id() !== $planning->user_id || $planning->status !== 'borrador') {
+            abort(403, 'No tienes permiso para eliminar esta planificación.');
+        }
+
+        // Delete the file from storage
+        Storage::disk('public')->delete($planning->file_path);
+
+        // Delete the planning from the database
+        $planning->delete();
+
+        return redirect()->route('plannings.index')->with('success', 'Planificación eliminada exitosamente.');
     }
 }

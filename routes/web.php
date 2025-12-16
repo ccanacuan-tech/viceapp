@@ -5,6 +5,9 @@ use App\Http\Controllers\PlanningController;
 use App\Http\Controllers\CommentController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\GoogleDriveController;
+use App\Http\Controllers\TeacherController;
+use App\Http\Controllers\ReportController;
+use App\Http\Controllers\SubjectController;
 use Illuminate\Support\Facades\Route;
 
 Route::redirect('/', '/login');
@@ -19,8 +22,7 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     // Rutas de Planificaciones
-    Route::get('/plannings', [PlanningController::class, 'index'])->name('plannings.index');
-    Route::post('/plannings', [PlanningController::class, 'store'])->name('plannings.store');
+    Route::resource('plannings', PlanningController::class)->except(['create', 'show', 'edit', 'update']);
     Route::get('/plannings/{planning}/download', [PlanningController::class, 'download'])->name('plannings.download');
     Route::get('/plannings/{planning}/view', [PlanningController::class, 'view'])->name('plannings.view');
     Route::patch('/plannings/{planning}/status', [PlanningController::class, 'updateStatus'])->name('plannings.updateStatus');
@@ -39,6 +41,15 @@ Route::middleware('auth')->group(function () {
     Route::get('/google-drive/connect', [GoogleDriveController::class, 'connect'])->name('google.connect');
     Route::get('/google-drive/callback', [GoogleDriveController::class, 'callback'])->name('google.callback');
     Route::get('/google-drive/picker', [GoogleDriveController::class, 'picker'])->name('google.picker');
+    
+    // Rutas para las nuevas secciones
+    Route::resource('teachers', TeacherController::class);
+    Route::resource('reports', ReportController::class)->only(['index']);
+
+    // Rutas para Áreas Académicas (solo Vicerrector)
+    Route::middleware('role:vicerrector')->group(function () {
+        Route::resource('subjects', SubjectController::class);
+    });
 });
 
 require __DIR__.'/auth.php';

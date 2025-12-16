@@ -102,10 +102,24 @@
                         @endif
 
                         <form action="{{ route('plannings.store') }}" method="POST" enctype="multipart/form-data" class="space-y-6">
+                            @csrf
                             <div>
                                 <x-input-label for="title" :value="__('Título de la Planificación')" class="text-base"/>
                                 <x-text-input id="title" class="block mt-2 w-full" type="text" name="title" :value="old('title')" required autofocus />
                                 <x-input-error :messages="$errors->get('title')" class="mt-2" />
+                            </div>
+
+                            <div>
+                                <x-input-label for="subject_id" :value="__('Área Académica')" class="text-base"/>
+                                <select id="subject_id" name="subject_id" class="block mt-2 w-full border-gray-300 focus:border-red-500 focus:ring-red-500 rounded-md shadow-sm" required>
+                                    <option value="">Seleccione un área</option>
+                                    @foreach($subjects as $subject)
+                                        <option value="{{ $subject->id }}" {{ old('subject_id') == $subject->id ? 'selected' : '' }}>
+                                            {{ $subject->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                <x-input-error :messages="$errors->get('subject_id')" class="mt-2" />
                             </div>
 
                             <div>
@@ -162,7 +176,7 @@
                                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Título</th>
                                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
                                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha de Subida</th>
-                                        <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+                                        <th scope="col" class="relative px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
                                     </tr>
                                 </thead>
                                 <tbody class="bg-white divide-y divide-gray-200">
@@ -183,6 +197,23 @@
                                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{{ $planning->created_at->format('d/m/Y H:i') }}</td>
                                             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                                 <a href="{{ route('plannings.view', $planning) }}" class="text-red-600 hover:text-red-800 font-semibold">Ver Detalles</a>
+
+                                                @if($planning->status == 'borrador' || $planning->status == 'rechazado')
+                                                    <form action="{{ route('plannings.updateStatus', $planning) }}" method="POST" class="inline-block ml-4">
+                                                        @csrf
+                                                        @method('PATCH')
+                                                        <input type="hidden" name="status" value="revisión">
+                                                        <button type="submit" class="text-blue-600 hover:text-blue-800 font-semibold">Enviar a Revisión</button>
+                                                    </form>
+                                                @endif
+
+                                                @if($planning->status == 'borrador')
+                                                    <form action="{{ route('plannings.destroy', $planning) }}" method="POST" class="inline-block ml-4" onsubmit="return confirm('¿Estás seguro de que quieres eliminar esta planificación? Esta acción no se puede deshacer.');">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button type="submit" class="text-gray-600 hover:text-gray-800 font-semibold">Eliminar</button>
+                                                    </form>
+                                                @endif
                                             </td>
                                         </tr>
                                     @empty

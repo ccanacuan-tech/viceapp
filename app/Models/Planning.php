@@ -14,6 +14,7 @@ class Planning extends Model
         'title',
         'file_path',
         'status',
+        'subject_id',
     ];
 
     public function user()
@@ -24,5 +25,10 @@ class Planning extends Model
     public function comments()
     {
         return $this->hasMany(Comment::class);
+    }
+
+    public function subject()
+    {
+        return $this->belongsTo(Subject::class);
     }
 }

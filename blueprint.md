@@ -1,4 +1,3 @@
-
 # Gestor de Planificaciones Docentes (GPD)
 
 ## Visión General
@@ -38,14 +37,30 @@ Este proyecto tiene como objetivo digitalizar y automatizar el flujo de trabajo 
 ### Sprint 6: Rediseño Visual y Mejoras de la Experiencia de Usuario
 
 - [x] **Actualizar la paleta de colores:** Rediseñar las vistas de la aplicación utilizando una paleta de colores beige, blanco y rojo.
-    - Se ha actualizado `tailwind.config.js` para incluir los nuevos colores.
-    - Se han modificado las plantillas `welcome.blade.php`, `guest.blade.php`, `app.blade.php`, y `navigation.blade.php` para usar la nueva paleta.
-    - Se ha cambiado el color del botón principal a rojo.
 - [x] **Revisar y arreglar la navegación:** Asegurar que todos los enlaces de navegación, incluidos los botones de perfil y de cierre de sesión, funcionan correctamente.
-    - Se ha creado el componente de notificaciones (`notifications.blade.php`).
-- [x] **Establecer el inicio de sesión como punto de entrada principal:** Modificar el enrutamiento para que la página de inicio de sesión sea la página por defecto para los usuarios no autenticados.
-- [x] **Crear seeders de usuario:** Implementar un seeder para crear usuarios por defecto para los roles: 'docente', 'secretaria' y 'vicerrector'.
-- [x] **Generar un resumen de las credenciales de los usuarios:** Crear una tabla markdown con las credenciales de acceso de los usuarios recién creados.
+- [x] **Establecer el inicio de sesión como punto de entrada principal.**
+- [x] **Crear seeders de usuario.**
+- [x] **Generar un resumen de las credenciales de los usuarios.**
+- [x] **Mejorar el dashboard con un mensaje de bienvenida y tarjetas de funcionalidades.**
+- [x] **Implementar la navegación del dashboard.**
+
+### Sprint 7: Administración de Docentes (CRUD)
+
+- [x] **Definir rutas CRUD para docentes.**
+- [x] **Implementar el `TeacherController` para gestionar las operaciones CRUD.**
+- [x] **Crear la vista `index` para listar los docentes.**
+- [x] **Crear la vista `create` con un formulario para añadir nuevos docentes.**
+- [x] **Crear la vista `edit` con un formulario para actualizar la información de los docentes.**
+- [x] **Implementar la lógica para eliminar docentes.**
+
+### Sprint 8: Gestión de Áreas Académicas
+
+- [ ] **Crear modelo y migración para Áreas Académicas (`Subject`).**
+- [ ] **Implementar CRUD para que el rol `vicerrector` gestione las Áreas Académicas.**
+- [ ] **Añadir enlace en la navegación para la gestión de Áreas Académicas (solo visible para `vicerrector`).**
+- [ ] **Actualizar la migración de `plannings` para añadir la relación con `Subject`.**
+- [ ] **Modificar el formulario de subida de planificaciones para incluir un selector de Área Académica.**
+- [ ] **Mostrar el Área Académica en las vistas de listado de planificaciones.**
 
 ## Credenciales de Usuario
 
