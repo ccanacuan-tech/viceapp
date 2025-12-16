@@ -12,7 +12,7 @@ class PlanningController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Planning::where('user_id', Auth::id());
+        $query = Planning::with('subject')->where('user_id', Auth::id());
 
         if ($request->has('search') && $request->input('search') != '') {
             $query->where('title', 'like', '%' . $request->input('search') . '%');
@@ -30,7 +30,7 @@ class PlanningController extends Controller
 
     public function review(Request $request)
     {
-        $plannings = Planning::with('user')
+        $plannings = Planning::with('user', 'subject')
             ->where('status', 'revisión')
             ->latest()
             ->paginate(15);
@@ -71,7 +71,7 @@ class PlanningController extends Controller
     {
         $user = Auth::user();
         if ($user->hasRole('secretaria') || $user->hasRole('vicerrector') || $planning->user_id === $user->id) {
-            $planning->load('comments.user');
+            $planning->load('comments.user', 'subject');
             return view('plannings.view', compact('planning'));
         }
         abort(403, 'Página no encontrada o sin permisos de acceso.');
