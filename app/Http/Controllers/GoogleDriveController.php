@@ -2,10 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Subject; // Importar el modelo Subject
 use Google\Client;
 use Google\Service\Drive;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class GoogleDriveController extends Controller
 {
@@ -17,7 +18,7 @@ class GoogleDriveController extends Controller
         $client->setRedirectUri(config('google.redirect_uri'));
         $client->setScopes([
             Drive::DRIVE_FILE,
-            Drive::DRIVE,
+            Drive::DRIVE_READONLY,
         ]);
         $client->setAccessType('offline');
         $client->setApprovalPrompt('force');
@@ -32,58 +33,45 @@ class GoogleDriveController extends Controller
         $client->setClientSecret(config('google.client_secret'));
         $client->setRedirectUri(config('google.redirect_uri'));
 
-        $token = $client->fetchAccessTokenWithAuthCode($request->code);
-
-        // Store the refresh token in the .env file
-        if (isset($token['refresh_token'])) {
-            $this->updateDotEnv('GOOGLE_REFRESH_TOKEN', $token['refresh_token']);
+        try {
+            $token = $client->fetchAccessTokenWithAuthCode($request->code);
+            $request->session()->put('google_drive_token', $token);
+        } catch (\Exception $e) {
+            Log::error('Error al obtener el token de Google: ' . $e->getMessage());
+            return redirect('/dashboard')->with('error', 'Hubo un error al conectar con Google Drive.');
         }
 
-        return redirect('/plannings')->with('success', 'Google Drive conectado correctamente!');
+        return redirect()->route('google.picker')->with('success', 'Google Drive conectado correctamente!');
     }
 
-    public function picker()
+    public function picker(Request $request)
     {
-        $client = new Client();
-        $client->setClientId(config('google.client_id'));
-        $client->setClientSecret(config('google.client_secret'));
-        $client->setRefreshToken(env('GOOGLE_REFRESH_TOKEN'));
-        $client->fetchAccessTokenWithRefreshToken();
-        $accessToken = $client->getAccessToken();
+        $token = $request->session()->get('google_drive_token');
 
-        if (!$accessToken) {
-            return redirect()->route('google.connect')->with('error', 'No se pudo obtener el token de acceso de Google. Por favor, vuelve a conectarte.');
+        if (!$token) {
+            return redirect()->route('google.connect')->with('error', 'Tu sesión de Google ha expirado. Por favor, conéctate de nuevo.');
         }
+
+        $client = new Client();
+        $client->setAccessToken($token);
+
+        if ($client->isAccessTokenExpired()) {
+            if (isset($token['refresh_token'])) {
+                $client->fetchAccessTokenWithRefreshToken($token['refresh_token']);
+                $request->session()->put('google_drive_token', $client->getAccessToken());
+            } else {
+                 return redirect()->route('google.connect')->with('error', 'Tu sesión de Google ha expirado y no se pudo refrescar. Por favor, conéctate de nuevo.');
+            }
+        }
+
+        $accessToken = $client->getAccessToken();
+        $subjects = Subject::all(); // Obtener todas las áreas académicas
 
         return view('google-drive.picker', [
             'accessToken' => $accessToken['access_token'],
             'developerKey' => config('google.developer_key'),
-            'clientId' => config('google.client_id'),
+            'appId' => config('google.client_id'),
+            'subjects' => $subjects, // Pasar las áreas a la vista
         ]);
-    }
-
-    /**
-     * Update the .env file with the given key and value.
-     *
-     * @param string $key
-     * @param string $value
-     * @return void
-     */
-    protected function updateDotEnv($key, $value)
-    {
-        $path = base_path('.env');
-
-        if (file_exists($path)) {
-            $content = file_get_contents($path);
-            $oldValue = env($key);
-
-            if (strpos($content, $key . '=') !== false) {
-                $content = str_replace($key . '=' . $oldValue, $key . '=' . $value, $content);
-            } else {
-                $content .= "\n" . $key . '=' . $value;
-            }
-
-            file_put_contents($path, $content);
-        }
     }
 }

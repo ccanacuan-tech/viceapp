@@ -69,6 +69,9 @@
                             <x-secondary-button id="download-word-btn">
                                 {{ __('Descargar Word') }}
                             </x-secondary-button>
+                            <x-secondary-button id="view-word-btn">
+                                {{ __('Visualizar Word') }}
+                            </x-secondary-button>
                         </div>
                     </form>
 
@@ -112,6 +115,24 @@
         </div>
     </div>
 
+    <!-- Word Viewer Modal -->
+    <div id="word-viewer-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden">
+        <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-2/3 shadow-lg rounded-md bg-white">
+            <div class="flex justify-between items-center pb-3">
+                <p class="text-2xl font-bold">Vista Previa del Reporte</p>
+                <div id="close-modal-btn" class="cursor-pointer z-50">
+                    <svg class="fill-current text-black" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path d="M18.3 5.71a.996.996 0 00-1.41 0L12 10.59 7.11 5.7A.996.996 0 105.7 7.11L10.59 12 5.7 16.89a.996.996 0 101.41 1.41L12 13.41l4.89 4.89a.996.996 0 101.41-1.41L13.41 12l4.89-4.89c.38-.38.38-1.02 0-1.4z"/></svg>
+                </div>
+            </div>
+            <div id="word-content" class="prose max-w-none"></div>
+             <div id="loading-indicator" class="text-center p-8 hidden">
+                <p class="text-lg font-semibold">Cargando vista previa...</p>
+                <p class="text-gray-500">Esto puede tardar unos segundos.</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/mammoth@1.6.0/mammoth.browser.min.js"></script>
     <script>
         document.getElementById('download-pdf-btn').addEventListener('click', function() {
             const form = document.getElementById('report-form');
@@ -123,6 +144,49 @@
             const form = document.getElementById('report-form');
             const params = new URLSearchParams(new FormData(form)).toString();
             window.location.href = `{{ route('reports.download', 'word') }}?${params}`;
+        });
+
+        // Word Viewer Logic
+        const viewWordBtn = document.getElementById('view-word-btn');
+        const modal = document.getElementById('word-viewer-modal');
+        const closeModalBtn = document.getElementById('close-modal-btn');
+        const wordContent = document.getElementById('word-content');
+        const loadingIndicator = document.getElementById('loading-indicator');
+
+        viewWordBtn.addEventListener('click', async function() {
+            modal.classList.remove('hidden');
+            wordContent.innerHTML = ''; // Clear previous content
+            loadingIndicator.classList.remove('hidden');
+
+            const form = document.getElementById('report-form');
+            const params = new URLSearchParams(new FormData(form)).toString();
+            const url = `{{ route('reports.download', 'word') }}?${params}`;
+
+            try {
+                const response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error('Error al generar el reporte.');
+                }
+                const arrayBuffer = await response.arrayBuffer();
+                const result = await mammoth.convertToHtml({ arrayBuffer: arrayBuffer });
+                wordContent.innerHTML = result.value;
+            } catch (error) {
+                wordContent.innerHTML = `<p class="text-red-500">${error.message}</p>`;
+                console.error('Error al visualizar el Word:', error);
+            } finally {
+                loadingIndicator.classList.add('hidden');
+            }
+        });
+
+        closeModalBtn.addEventListener('click', function() {
+            modal.classList.add('hidden');
+        });
+
+        // Close modal on escape key press
+        window.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                modal.classList.add('hidden');
+            }
         });
     </script>
 </x-app-layout>
