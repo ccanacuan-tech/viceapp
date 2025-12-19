@@ -25,27 +25,22 @@ Este proyecto tiene como objetivo digitalizar y automatizar el flujo de trabajo 
 
 ### Sprint 4: Colaboración y Búsqueda
 
-- [x] **Implementar la funcionalidad de comentarios.**
-- [x] **Implementar un sistema de notificaciones para los comentarios.**
-- [x] **Implementar la funcionalidad de búsqueda y filtrado.**
+- [x] **Crear un sistema de notificaciones para los cambios de estado.**
+- [x] **Añadir un campo de búsqueda para filtrar las planificaciones.**
 
 ### Sprint 5: Integración con Google Drive
 
 - [x] **Configurar la API de Google Drive.**
-- [x] **Implementar la selección de archivos desde Google Drive.**
+- [x] **Implementar la carga de archivos desde Google Drive.**
 
-### Sprint 6: Rediseño Visual y Mejoras de la Experiencia de Usuario
+### Sprint 6: Mejoras en la Interfaz y Experiencia de Usuario
 
-- [x] **Actualizar la paleta de colores:** Rediseñar las vistas de la aplicación utilizando una paleta de colores beige, blanco y rojo.
-- [x] **Revisar y arreglar la navegación:** Asegurar que todos los enlaces de navegación, incluidos los botones de perfil y de cierre de sesión, funcionan correctamente.
-- [x] **Establecer el inicio de sesión como punto de entrada principal.**
-- [x] **Crear seeders de usuario.**
-- [x] **Generar un resumen de las credenciales de los usuarios.**
-- [x] **Mejorar el dashboard con un mensaje de bienvenida y tarjetas de funcionalidades.**
-- [x] **Implementar la navegación del dashboard.**
+- [x] **Rediseñar la interfaz para una apariencia más moderna y limpia.**
+- [x] **Asegurar que el diseño sea responsivo y funcione en dispositivos móviles.**
 
-### Sprint 7: Administración de Docentes (CRUD)
+### Sprint 7: Gestión de Docentes (CRUD)
 
+- [x] **Crear el modelo y la migración para los docentes.**
 - [x] **Definir rutas CRUD para docentes.**
 - [x] **Implementar el `TeacherController` para gestionar las operaciones CRUD.**
 - [x] **Crear la vista `index` para listar los docentes.**
@@ -61,6 +56,14 @@ Este proyecto tiene como objetivo digitalizar y automatizar el flujo de trabajo 
 - [ ] **Actualizar la migración de `plannings` para añadir la relación con `Subject`.**
 - [ ] **Modificar el formulario de subida de planificaciones para incluir un selector de Área Académica.**
 - [ ] **Mostrar el Área Académica en las vistas de listado de planificaciones.**
+
+### Sprint 9: Generación de Reportes
+
+- [ ] **Crear el `ReportController` para gestionar la lógica de los reportes.**
+- [ ] **Definir la ruta para la vista de reportes.**
+- [ ] **Diseñar la vista `reports/index.blade.php` con un formulario para seleccionar fechas.**
+- [ ] **Implementar la lógica para consultar y agrupar las planificaciones por estado.**
+- [ ] **Mostrar los resultados en una tabla dentro de la misma vista.**
 
 ## Credenciales de Usuario
 

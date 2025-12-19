@@ -45,6 +45,7 @@ Route::middleware('auth')->group(function () {
     // Rutas para las nuevas secciones
     Route::resource('teachers', TeacherController::class);
     Route::resource('reports', ReportController::class)->only(['index']);
+    Route::get('/reports/download/{type}', [ReportController::class, 'download'])->name('reports.download');
 
     // Rutas para Áreas Académicas (solo Vicerrector)
     Route::middleware('role:vicerrector')->group(function () {
